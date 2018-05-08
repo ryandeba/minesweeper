@@ -408,6 +408,7 @@
       //setTimeout(this.solve, 500);
     }
   });
+  window.test = app;
 
   function Cell(row, column) {
     return {
