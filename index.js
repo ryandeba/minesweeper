@@ -100,6 +100,14 @@
         return this.mines - this.cellsFlaggedAsMines.length;
       },
 
+      remainingCellsCount: function() {
+        return this.cells.filter(function(cell) {
+          return cell.revealed == false
+            && cell.flaggedAsMine == false
+            && cell.flaggedAsPossibleMine == false;
+        }).length;
+      },
+
       cellsUnrevealedWithoutMines: function() {
         return this.cells.filter(function(cell) {
           return !cell.revealed && !cell.isMine;
