@@ -110,21 +110,14 @@
     <div id="app" v-cloak>
       <md-card style="width: 100%;">
         <md-card-header>
-          <div class="md-layout">
-            <div class="md-layout-item">
-              <div class="md-title">Minesweeper {{ gameStatus }}</div>
-            </div>
-            <div class="md-layout-item" style="display: flex; align-items: center;">
+          <div style="display: flex; justify-content: space-between;">
+            <div class="md-title">Minesweeper {{ gameStatus }}</div>
+            <div style="display: flex; align-items: center;">
               <strong style="margin-right: 10px;">
                 Mines: {{ mineCount }}
               </strong>
-              <md-progress-spinner md-mode="determinate" :md-diameter="30" :md-value="mineCount / mines * 100"></md-progress-spinner>
-            </div>
-            <div class="md-layout-item" style="display: flex; align-items: center;">
-              <strong style="margin-right: 10px;">
-                Remaining: {{ remainingCellsCount }}
-              </strong>
-              <md-progress-spinner md-mode="determinate" :md-diameter="30" :md-value="remainingCellsCount / cells.length * 100"></md-progress-spinner>
+              <md-progress-spinner md-mode="determinate" :md-diameter="30" :md-value="mineCount / mines * 100">
+              </md-progress-spinner>
             </div>
           </div>
         </md-card-header>
@@ -138,9 +131,11 @@
         </md-card-content>
 
         <md-card-actions>
+          <!--
           <md-button v-on:click="solve">Solve</md-button>
           <md-button v-on:click="solveWithPossibleFlags">Solve w/ possible flags</md-button>
           <md-button v-on:click="solveOneStep">Solve 1 Step</md-button>
+          -->
           <md-button v-on:click="reload">New Game</md-button>
         </md-card-actions>
       </md-card>
