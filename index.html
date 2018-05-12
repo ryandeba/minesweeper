@@ -100,8 +100,8 @@
           <template v-if="revealed && isMine">
             <i class="fa fa-bomb"></i>
           </template>
-          <template v-if="revealed && !isMine && surroundingMines.length > 0">
-            {{ surroundingMines.length }}
+          <template v-if="revealed && !isMine && value">
+            {{ value }}
           </template>
         </div>
       </button>

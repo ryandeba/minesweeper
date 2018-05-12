@@ -34,23 +34,15 @@
       "revealed",
       "incorrect",
       "isMine",
-      "surroundingCells",
-      "surroundingMines",
       "flaggedAsMine",
       "flaggedAsPossibleMine"
     ],
 
-    methods: {
-      getSurroundingCellsFlaggedAsMine: function() {
-        return this.surroundingCells.filter(function(cell) {
-          return cell.flaggedAsMine;
-        });
-      },
-
-      getSurroundingCellsUnrevealedAndUnflagged: function() {
-        return this.surroundingCells.filter(function(cell) {
-          return !cell.revealed && !cell.flaggedAsMine && !cell.flaggedAsPossibleMine;
-        });
+    computed: {
+      value: function() {
+        if (this.revealed && !this.isMine) {
+          return app.getSurroundingMines(this).length;
+        }
       }
     }
   });
@@ -153,8 +145,6 @@
               revealed: false,
               incorrect: false,
               isMine: false,
-              surroundingCells: [],
-              surroundingMines: [],
               flaggedAsMine: false,
               flaggedAsPossibleMine: false
             });
@@ -180,8 +170,6 @@
         cell.isMine && gameOver();
 
         function initializeCells() {
-          //populateSurroundingCells();
-
           var cells = self.cells
             .filter(function(otherCell) {
               return otherCell != cell;
@@ -195,7 +183,6 @@
             cells.pop().isMine = true;
           }
 
-          //populateSurroundingMines();
           self.cellsInitialized = true;
         };
 
@@ -220,7 +207,7 @@
         };
 
         if (!cell.isMine) {
-          cell.surroundingCells.forEach(function(otherCell) {
+          self.getSurroundingCells(cell).forEach(function(otherCell) {
             self.cascadeReveal(otherCell, cell);
           });
         };
@@ -242,46 +229,6 @@
               minesToPlace--;
             }
           };
-        };
-
-        function populateSurroundingCells() {
-          self.cells.forEach(function(cell) {
-            cell.surroundingCells = [
-              // top
-              self.getCellByCoordinates(cell.row - 1, cell.column),
-
-              // top-right
-              self.getCellByCoordinates(cell.row - 1, cell.column + 1),
-
-              // right
-              self.getCellByCoordinates(cell.row, cell.column + 1),
-
-              // bottom-right
-              self.getCellByCoordinates(cell.row + 1, cell.column + 1),
-
-              // bottom
-              self.getCellByCoordinates(cell.row + 1, cell.column),
-
-              // bottom-left
-              self.getCellByCoordinates(cell.row + 1, cell.column - 1),
-
-              // left
-              self.getCellByCoordinates(cell.row, cell.column - 1),
-
-              // top-left
-              self.getCellByCoordinates(cell.row - 1, cell.column - 1),
-            ].filter(function(otherCell) {
-              return otherCell;
-            });
-          });
-        };
-
-        function populateSurroundingMines() {
-          self.cells.forEach(function (cell) {
-            cell.surroundingMines = cell.surroundingCells.filter(function(otherCell) {
-              return otherCell.isMine;
-            });
-          });
         };
       },
 
@@ -310,12 +257,12 @@
             return;
           };
 
-          var surroundingCellsFlagged = cell.surroundingCells.filter(function(cell) {
+          var surroundingCellsFlagged = self.getSurroundingCells(cell).filter(function(cell) {
             return !cell.revealed && cell.flaggedAsMine;
           });
 
-          if (surroundingCellsFlagged.length == cell.surroundingMines.length) {
-            cell.surroundingCells.forEach(function(cell) {
+          if (surroundingCellsFlagged.length == self.getSurroundingMines(cell).length) {
+            self.getSurroundingCells(cell).forEach(function(cell) {
               self.revealCell(cell);
             });
           };
@@ -328,10 +275,10 @@
         if (
           !cell.isMine
           && !cell.revealed
-          && sourceCell.surroundingMines == 0
+          && self.getSurroundingMines(sourceCell) == 0
         ) {
           cell.revealed = true;
-          cell.surroundingCells.forEach(function(otherCell) {
+          self.getSurroundingCells(cell).forEach(function(otherCell) {
             self.cascadeReveal(otherCell, cell);
           });
         };
@@ -348,16 +295,18 @@
       },
 
       solveFlag: function() {
+        var self = this;
+
         this.cells
           .filter(function(cell) {
             return cell.revealed;
           })
           .forEach(function(cell) {
-            var unrevealedSurroundingCells = cell.surroundingCells.filter(function(otherCell) {
+            var unrevealedSurroundingCells = self.getSurroundingCells(cell).filter(function(otherCell) {
               return !otherCell.revealed;
             });
 
-            if (unrevealedSurroundingCells.length == cell.surroundingMines.length) {
+            if (unrevealedSurroundingCells.length == self.getSurroundingMines(cell).length) {
               unrevealedSurroundingCells.forEach(function(otherCell) {
                 otherCell.flaggedAsMine = true;
               });
@@ -377,12 +326,12 @@
             return cell.revealed;
           })
           .forEach(function(cell) {
-            var flaggedSurroundingCells = cell.surroundingCells.filter(function(otherCell) {
+            var flaggedSurroundingCells = self.getSurroundingCells(cell).filter(function(otherCell) {
               return otherCell.flaggedAsMine;
             });
 
-            if (flaggedSurroundingCells.length == cell.surroundingMines.length) {
-              cell.surroundingCells
+            if (flaggedSurroundingCells.length == self.getSurroundingMines(cell).length) {
+              self.getSurroundingCells(cell)
                 .filter(function(otherCell) {
                   return !otherCell.revealed && !otherCell.flaggedAsMine;
                 })
@@ -393,6 +342,56 @@
           });
       },
 
+      getSurroundingCells: function(cell) {
+        return [
+          // top
+          this.getCellByCoordinates(cell.row - 1, cell.column),
+
+          // top-right
+          this.getCellByCoordinates(cell.row - 1, cell.column + 1),
+
+          // right
+          this.getCellByCoordinates(cell.row, cell.column + 1),
+
+          // bottom-right
+          this.getCellByCoordinates(cell.row + 1, cell.column + 1),
+
+          // bottom
+          this.getCellByCoordinates(cell.row + 1, cell.column),
+
+          // bottom-left
+          this.getCellByCoordinates(cell.row + 1, cell.column - 1),
+
+          // left
+          this.getCellByCoordinates(cell.row, cell.column - 1),
+
+          // top-left
+          this.getCellByCoordinates(cell.row - 1, cell.column - 1),
+        ].filter(function(otherCell) {
+          return otherCell;
+        });
+      },
+
+      getSurroundingMines: function(cell) {
+        return this.getSurroundingCells(cell).filter(function(otherCell) {
+          return otherCell.isMine;
+        });
+      },
+
+      // TODO: refactor/move this
+      getSurroundingCellsUnrevealedAndUnflagged: function(cell) {
+        return this.getSurroundingCells(cell).filter(function(otherCell) {
+          return !otherCell.revealed && !otherCell.flaggedAsMine && !otherCell.flaggedAsPossibleMine;
+        });
+      },
+
+      // TODO: refactor/move this
+      getSurroundingCellsFlaggedAsMine: function(cell) {
+        return this.getSurroundingCells(cell).filter(function(otherCell) {
+          return otherCell.flaggedAsMine;
+        });
+      },
+
       solveWithPossibleFlags: function() {
         var self = this;
 
@@ -400,7 +399,7 @@
 
         getCellsWithUnknownMines()
           .forEach(function(cell) {
-            var surroundingCellsUnrevealedAndUnflagged = cell.getSurroundingCellsUnrevealedAndUnflagged();
+            var surroundingCellsUnrevealedAndUnflagged = self.getSurroundingCellsUnrevealedAndUnflagged(cell);
 
             surroundingCellsUnrevealedAndUnflagged.forEach(function(otherCell) {
               otherCell.flaggedAsPossibleMine = true;
@@ -426,7 +425,7 @@
         function getCellsWithUnknownMines() {
           return self.cells
             .filter(function(cell) {
-              return cell.revealed && cell.surroundingMines.length > cell.getSurroundingCellsFlaggedAsMine().length;
+              return cell.revealed && self.getSurroundingMines(cell).length > self.getSurroundingCellsFlaggedAsMine(cell).length;
             });
         };
       },
@@ -485,19 +484,5 @@
     }
   });
   window.app = app; // TODO
-
-  function Cell(row, column) {
-    return {
-      row: row,
-      column: column,
-      revealed: false,
-      incorrect: false,
-      isMine: false,
-      surroundingCells: [],
-      surroundingMines: [],
-      flaggedAsMine: false,
-      flaggedAsPossibleMine: false
-    }
-  };
 
 })();
