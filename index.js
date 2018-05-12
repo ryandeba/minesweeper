@@ -9,22 +9,36 @@
 })();
 
 (function() {
+  window.shuffle = function(a) {
+    var j, x, i;
+    for (i = a.length - 1; i > 0; i--) {
+      j = Math.floor(Math.random() * (i + 1));
+      x = a[i];
+      a[i] = a[j];
+      a[j] = x;
+    }
+    return a;
+  }
+
+})();
+
+(function() {
   var app;
 
   Vue.component("cell", {
     template: "#cellTemplate",
 
-    props: {
-      "row": {default: 0},
-      "column": {default: 0},
-      "revealed": {default: false},
-      "incorrect": {default: false},
-      "isMine": {default: false},
-      "surroundingCells": {default: function() { return []; }},
-      "surroundingMines": {default: function() { return []; }},
-      "flaggedAsMine": {default: false},
-      "flaggedAsPossibleMine": {default: false}
-    },
+    props: [
+      "row",
+      "column",
+      "revealed",
+      "incorrect",
+      "isMine",
+      "surroundingCells",
+      "surroundingMines",
+      "flaggedAsMine",
+      "flaggedAsPossibleMine"
+    ],
 
     methods: {
       getSurroundingCellsFlaggedAsMine: function() {
@@ -47,7 +61,8 @@
       rows: 16,
       columns: 30,
       mines: 99,
-      cells: []
+      cells: [],
+      cellsInitialized: false
     },
     computed: {
       minefield: function() {
@@ -127,6 +142,7 @@
       },
 
       newGame: function() {
+        this.cellsInitialized = false;
         this.cells = [];
 
         for (var rowIndex = 0; rowIndex < this.rows; rowIndex++) {
@@ -149,6 +165,8 @@
       revealCell: function(cell) {
         var self = this;
 
+        !self.cellsInitialized && initializeCells();
+
         if (
           cell.revealed
           || cell.flaggedAsMine
@@ -159,7 +177,29 @@
 
         cell.revealed = true;
 
-        if (cell.isMine) {
+        cell.isMine && gameOver();
+
+        function initializeCells() {
+          //populateSurroundingCells();
+
+          var cells = self.cells
+            .filter(function(otherCell) {
+              return otherCell != cell;
+            })
+            .map(function(otherCell) {
+              return otherCell;
+            });
+
+          for (var i = 0; i < self.mines; i++) {
+            shuffle(cells);
+            cells.pop().isMine = true;
+          }
+
+          //populateSurroundingMines();
+          self.cellsInitialized = true;
+        };
+
+        function gameOver() {
           // reveal all of the mines
           self.cells
             .filter(function(otherCell) {
@@ -177,12 +217,6 @@
             .forEach(function(otherCell) {
               otherCell.incorrect = true;
             });
-        };
-
-        if (self.cells.filter(function(otherCell) { return otherCell.isMine; }).length == 0) {
-          populateSurroundingCells();
-          populateMines([cell].concat(cell.surroundingCells));
-          populateSurroundingMines();
         };
 
         if (!cell.isMine) {
@@ -308,7 +342,9 @@
           return this.cells.filter(function(cell) {
             return cell.row == rowIndex && cell.column == columnIndex;
           })[0];
-        } catch (e) { };
+        } catch (e) {
+          console.error("could not find cell at coordinates", arguments, e);
+        };
       },
 
       solveFlag: function() {
