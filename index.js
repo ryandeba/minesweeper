@@ -9,49 +9,34 @@
 })();
 
 (function() {
-  var app, solver;
+  var app;
 
   Vue.component("cell", {
     template: "#cellTemplate",
-    props: ["cell"],
+
+    props: {
+      "row": {default: 0},
+      "column": {default: 0},
+      "revealed": {default: false},
+      "incorrect": {default: false},
+      "isMine": {default: false},
+      "surroundingCells": {default: function() { return []; }},
+      "surroundingMines": {default: function() { return []; }},
+      "flaggedAsMine": {default: false},
+      "flaggedAsPossibleMine": {default: false}
+    },
+
     methods: {
-      reveal: function() {
-        app.revealCell(this.cell);
-      },
-
-      onRightClick: function() {
-        if (this.cell.revealed) {
-          this.revealSurrounding();
-        } else {
-          this.flag();
-        };
-      },
-
-      flag: function() {
-        if (this.cell.flaggedAsMine == true) {
-          this.cell.flaggedAsMine = false;
-          this.cell.flaggedAsPossibleMine = true;
-        } else if (this.cell.flaggedAsPossibleMine) {
-          this.cell.flaggedAsPossibleMine = false;
-        } else {
-          this.cell.flaggedAsMine = true;
-        };
-      },
-
-      revealSurrounding: function() {
-        if (!this.cell.revealed) {
-          return;
-        };
-
-        var surroundingCellsFlagged = this.cell.surroundingCells.filter(function(cell) {
-          return !cell.revealed && cell.flaggedAsMine;
+      getSurroundingCellsFlaggedAsMine: function() {
+        return this.surroundingCells.filter(function(cell) {
+          return cell.flaggedAsMine;
         });
+      },
 
-        if (surroundingCellsFlagged.length == this.cell.surroundingMines.length) {
-          this.cell.surroundingCells.forEach(function(cell) {
-            app.revealCell(cell);
-          });
-        };
+      getSurroundingCellsUnrevealedAndUnflagged: function() {
+        return this.surroundingCells.filter(function(cell) {
+          return !cell.revealed && !cell.flaggedAsMine && !cell.flaggedAsPossibleMine;
+        });
       }
     }
   });
@@ -146,7 +131,17 @@
 
         for (var rowIndex = 0; rowIndex < this.rows; rowIndex++) {
           for (var columnIndex = 0; columnIndex < this.columns; columnIndex++) {
-            this.cells.push(new Cell(rowIndex, columnIndex));
+            this.cells.push({
+              row: rowIndex,
+              column: columnIndex,
+              revealed: false,
+              incorrect: false,
+              isMine: false,
+              surroundingCells: [],
+              surroundingMines: [],
+              flaggedAsMine: false,
+              flaggedAsPossibleMine: false
+            });
           };
         };
       },
@@ -253,6 +248,43 @@
               return otherCell.isMine;
             });
           });
+        };
+      },
+
+      flagCell: function(cell) {
+        var self = this;
+
+        if (cell.revealed) {
+          revealSurrounding();
+        } else {
+          flag();
+        };
+
+        function flag() {
+          if (cell.flaggedAsMine == true) {
+            cell.flaggedAsMine = false;
+            cell.flaggedAsPossibleMine = true;
+          } else if (cell.flaggedAsPossibleMine) {
+            cell.flaggedAsPossibleMine = false;
+          } else {
+            cell.flaggedAsMine = true;
+          };
+        };
+
+        function revealSurrounding() {
+          if (!cell.revealed) {
+            return;
+          };
+
+          var surroundingCellsFlagged = cell.surroundingCells.filter(function(cell) {
+            return !cell.revealed && cell.flaggedAsMine;
+          });
+
+          if (surroundingCellsFlagged.length == cell.surroundingMines.length) {
+            cell.surroundingCells.forEach(function(cell) {
+              self.revealCell(cell);
+            });
+          };
         };
       },
 
@@ -416,6 +448,7 @@
       //setTimeout(this.solve, 500);
     }
   });
+  window.app = app; // TODO
 
   function Cell(row, column) {
     return {
@@ -427,19 +460,7 @@
       surroundingCells: [],
       surroundingMines: [],
       flaggedAsMine: false,
-      flaggedAsPossibleMine: false,
-
-      getSurroundingCellsFlaggedAsMine: function() {
-        return this.surroundingCells.filter(function(cell) {
-          return cell.flaggedAsMine;
-        });
-      },
-
-      getSurroundingCellsUnrevealedAndUnflagged: function() {
-        return this.surroundingCells.filter(function(cell) {
-          return !cell.revealed && !cell.flaggedAsMine && !cell.flaggedAsPossibleMine;
-        });
-      }
+      flaggedAsPossibleMine: false
     }
   };
 

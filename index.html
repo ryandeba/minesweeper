@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.css">
 
-    <script src="assets/vue.min.js"></script>
+    <script src="assets/vue.js"></script>
     <script src="assets/vue-material.min.js"></script>
 
     <style>
@@ -77,31 +77,28 @@
       <button
         class="cell"
         :class="{
-          'cell--revealed': cell.revealed,
-          'cell--not-revealed': !cell.revealed,
-          'cell--mine': cell.revealed && cell.isMine,
-          'cell--flagged-as-mine': !cell.revealed && cell.flaggedAsMine,
-          'cell--flagged-as-possible-mine': !cell.revealed && cell.flaggedAsPossibleMine,
-          'cell--incorrect': cell.incorrect,
+          'cell--revealed': revealed,
+          'cell--not-revealed': !revealed,
+          'cell--mine': revealed && isMine,
+          'cell--flagged-as-mine': !revealed && flaggedAsMine,
+          'cell--flagged-as-possible-mine': !revealed && flaggedAsPossibleMine,
+          'cell--incorrect': incorrect,
 
-          'animated tada': cell.revealed && cell.isMine,
+          'animated tada': revealed && isMine,
         }"
-        :md-ripple="false"
-        v-on:click="reveal"
-        v-on:click.right.prevent="onRightClick"
       >
         <div>
-          <template v-if="!cell.revealed && cell.flaggedAsMine">
+          <template v-if="!revealed && flaggedAsMine">
             <i class="fa fa-flag"></i>
           </template>
-          <template v-if="!cell.revealed && cell.flaggedAsPossibleMine">
+          <template v-if="!revealed && flaggedAsPossibleMine">
             <i class="fa fa-question-circle"></i>
           </template>
-          <template v-if="cell.revealed && cell.isMine">
+          <template v-if="revealed && isMine">
             <i class="fa fa-bomb"></i>
           </template>
-          <template v-if="cell.revealed && !cell.isMine && cell.surroundingMines.length > 0">
-            {{ cell.surroundingMines.length }}
+          <template v-if="revealed && !isMine && surroundingMines.length > 0">
+            {{ surroundingMines.length }}
           </template>
         </div>
       </button>
@@ -125,7 +122,11 @@
         <md-card-content>
           <div class="md-layout" v-for="row in minefield" v-if="cells.length == rows * columns">
             <div class="md-layout-item" v-for="cell in row">
-              <cell :cell="cell"></cell>
+              <cell
+                v-bind.sync="cell"
+                v-on:click.native="revealCell(cell)"
+                v-on:click.native.right.prevent="flagCell(cell)"
+              ></cell>
             </div>
           </div>
         </md-card-content>
