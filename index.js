@@ -32,10 +32,10 @@
       "row",
       "column",
       "revealed",
-      "incorrect",
       "isMine",
       "flaggedAsMine",
-      "flaggedAsPossibleMine"
+      "flaggedAsPossibleMine",
+      "incorrect"
     ],
 
     computed: {
@@ -76,17 +76,6 @@
 
         return rows;
       },
-
-      /*
-      solveMinefield: function() {
-        return this.minefield
-          .map(function(row) {
-            return row
-              .map(function(cell) {
-              });
-          });
-      },
-      */
 
       mineCount: function() {
         return this.mines - this.cellsFlaggedAsMines.length;
@@ -294,6 +283,56 @@
         };
       },
 
+      // TODO: refactor/move this
+      getSurroundingCells: function(cell) {
+        return [
+          // top
+          this.getCellByCoordinates(cell.row - 1, cell.column),
+
+          // top-right
+          this.getCellByCoordinates(cell.row - 1, cell.column + 1),
+
+          // right
+          this.getCellByCoordinates(cell.row, cell.column + 1),
+
+          // bottom-right
+          this.getCellByCoordinates(cell.row + 1, cell.column + 1),
+
+          // bottom
+          this.getCellByCoordinates(cell.row + 1, cell.column),
+
+          // bottom-left
+          this.getCellByCoordinates(cell.row + 1, cell.column - 1),
+
+          // left
+          this.getCellByCoordinates(cell.row, cell.column - 1),
+
+          // top-left
+          this.getCellByCoordinates(cell.row - 1, cell.column - 1),
+        ].filter(function(otherCell) {
+          return otherCell;
+        });
+      },
+
+      getSurroundingMines: function(cell) {
+        return this.getSurroundingCells(cell).filter(function(otherCell) {
+          return otherCell.isMine;
+        });
+      },
+
+      getSurroundingCellsUnrevealedAndUnflagged: function(cell) {
+        return this.getSurroundingCells(cell).filter(function(otherCell) {
+          return !otherCell.revealed && !otherCell.flaggedAsMine && !otherCell.flaggedAsPossibleMine;
+        });
+      },
+
+      getSurroundingCellsFlaggedAsMine: function(cell) {
+        return this.getSurroundingCells(cell).filter(function(otherCell) {
+          return otherCell.flaggedAsMine;
+        });
+      },
+
+      /*
       solveFlag: function() {
         var self = this;
 
@@ -340,56 +379,6 @@
                 });
             };
           });
-      },
-
-      getSurroundingCells: function(cell) {
-        return [
-          // top
-          this.getCellByCoordinates(cell.row - 1, cell.column),
-
-          // top-right
-          this.getCellByCoordinates(cell.row - 1, cell.column + 1),
-
-          // right
-          this.getCellByCoordinates(cell.row, cell.column + 1),
-
-          // bottom-right
-          this.getCellByCoordinates(cell.row + 1, cell.column + 1),
-
-          // bottom
-          this.getCellByCoordinates(cell.row + 1, cell.column),
-
-          // bottom-left
-          this.getCellByCoordinates(cell.row + 1, cell.column - 1),
-
-          // left
-          this.getCellByCoordinates(cell.row, cell.column - 1),
-
-          // top-left
-          this.getCellByCoordinates(cell.row - 1, cell.column - 1),
-        ].filter(function(otherCell) {
-          return otherCell;
-        });
-      },
-
-      getSurroundingMines: function(cell) {
-        return this.getSurroundingCells(cell).filter(function(otherCell) {
-          return otherCell.isMine;
-        });
-      },
-
-      // TODO: refactor/move this
-      getSurroundingCellsUnrevealedAndUnflagged: function(cell) {
-        return this.getSurroundingCells(cell).filter(function(otherCell) {
-          return !otherCell.revealed && !otherCell.flaggedAsMine && !otherCell.flaggedAsPossibleMine;
-        });
-      },
-
-      // TODO: refactor/move this
-      getSurroundingCellsFlaggedAsMine: function(cell) {
-        return this.getSurroundingCells(cell).filter(function(otherCell) {
-          return otherCell.flaggedAsMine;
-        });
       },
 
       solveWithPossibleFlags: function() {
@@ -476,6 +465,7 @@
           };
         };
       }
+      */
 
     },
     mounted: function() {
