@@ -91,16 +91,16 @@
         }"
       >
         <div>
-          <template v-if="!revealed && flaggedAsMine">
+          <template v-if="value == '?'">
             <i class="fa fa-flag"></i>
           </template>
-          <template v-if="!revealed && flaggedAsPossibleMine">
+          <template v-else-if="value == '??'">
             <i class="fa fa-question-circle"></i>
           </template>
-          <template v-if="revealed && isMine">
+          <template v-else-if="value == '!'">
             <i class="fa fa-bomb"></i>
           </template>
-          <template v-if="revealed && !isMine && value">
+          <template v-else-if="value">
             {{ value }}
           </template>
         </div>

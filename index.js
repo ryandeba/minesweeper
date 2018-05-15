@@ -194,6 +194,7 @@
             })
             .forEach(function(otherCell) {
               otherCell.revealed = true;
+              self.updateCellValue(otherCell);
             });
 
           // update incorrect cells (flagged as mine, but not a mine)
@@ -231,11 +232,7 @@
       },
 
       getCellValue: function(cell) {
-        if (!cell.revealed) {
-          return "";
-        }
-
-        if (cell.isMine) {
+        if (cell.revealed && cell.isMine) {
           return "!";
         }
 
@@ -245,6 +242,10 @@
 
         if (cell.flaggedAsPossibleMine) {
           return "??";
+        }
+
+        if (!cell.revealed) {
+          return "";
         }
 
         return this.getSurroundingMines(cell).length;
@@ -258,6 +259,8 @@
         } else {
           flag();
         };
+
+        self.updateCellValue(cell);
 
         function flag() {
           if (cell.flaggedAsMine == true) {
