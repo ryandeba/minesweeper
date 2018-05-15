@@ -33,17 +33,9 @@
       "isMine",
       "flaggedAsMine",
       "flaggedAsPossibleMine",
-      "incorrect"
-    ],
-
-    computed: {
-      value: function() {
-        if (this.revealed && !this.isMine) {
-          // TODO: this is terrible
-          return this.$parent.$parent.$parent.getSurroundingMines(this).length;
-        }
-      }
-    }
+      "incorrect",
+      "value"
+    ]
   });
 
   Vue.component("minesweeper", {
@@ -76,6 +68,15 @@
         };
 
         return rows;
+      },
+
+      // TODO: can minefield get replaced by this?
+      publicMinefield: function() {
+        return this.minefield.map(function(row) {
+          return row.map(function(cell) {
+            return cell.value;
+          });
+        });
       },
 
       mineCount: function() {
@@ -136,7 +137,8 @@
               incorrect: false,
               isMine: false,
               flaggedAsMine: false,
-              flaggedAsPossibleMine: false
+              flaggedAsPossibleMine: false,
+              value: ""
             });
           };
         };
@@ -158,6 +160,14 @@
         cell.revealed = true;
 
         cell.isMine && gameOver();
+
+        if (!cell.isMine) {
+          self.getSurroundingCells(cell).forEach(function(otherCell) {
+            self.cascadeReveal(otherCell, cell);
+          });
+        };
+
+        this.updateCellValue(cell);
 
         function initializeCells() {
           var cells = self.cells
@@ -196,12 +206,6 @@
             });
         };
 
-        if (!cell.isMine) {
-          self.getSurroundingCells(cell).forEach(function(otherCell) {
-            self.cascadeReveal(otherCell, cell);
-          });
-        };
-
         function populateMines(excludeCells) {
           var minesToPlace = self.mines;
 
@@ -220,6 +224,30 @@
             }
           };
         };
+      },
+
+      updateCellValue: function(cell) {
+        cell.value = this.getCellValue(cell);
+      },
+
+      getCellValue: function(cell) {
+        if (!cell.revealed) {
+          return "";
+        }
+
+        if (cell.isMine) {
+          return "!";
+        }
+
+        if (cell.flaggedAsMine) {
+          return "?";
+        }
+
+        if (cell.flaggedAsPossibleMine) {
+          return "??";
+        }
+
+        return this.getSurroundingMines(cell).length;
       },
 
       flagCell: function(cell) {
@@ -267,7 +295,7 @@
           && !cell.revealed
           && self.getSurroundingMines(sourceCell) == 0
         ) {
-          cell.revealed = true;
+          self.revealCell(cell);
           self.getSurroundingCells(cell).forEach(function(otherCell) {
             self.cascadeReveal(otherCell, cell);
           });
@@ -475,12 +503,22 @@
     }
   });
 
+  Vue.component("minesweeper-solver", {
+    template: "#solverTemplate",
+    props: ["minefield"],
+    methods: {
+      solve: function() {
+      }
+    }
+  });
+
   var app = new Vue({
     el: "#app",
     data: {
       games: [{}]
     }
   });
+
   window.app = app; // TODO
 
 })();

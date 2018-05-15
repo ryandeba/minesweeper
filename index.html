@@ -126,7 +126,7 @@
           <div class="md-layout" v-for="row in minefield" v-if="cells.length == rows * columns">
             <div class="md-layout-item" v-for="cell in row">
               <cell
-                v-bind.sync="cell"
+                v-bind="cell"
                 v-on:click.native="revealCell(cell)"
                 v-on:click.native.right.prevent="flagCell(cell)"
               ></cell>
@@ -140,13 +140,18 @@
           <md-button v-on:click="solveWithPossibleFlags">Solve w/ possible flags</md-button>
           <md-button v-on:click="solveOneStep">Solve 1 Step</md-button>
           -->
+          <minesweeper-solver :minefield="publicMinefield" ref="solver"></minesweeper-solver>
           <md-button v-on:click="reload">New Game</md-button>
         </md-card-actions>
       </md-card>
     </script>
 
+    <script type="text/template" id="solverTemplate">
+      <md-button v-on:click="solve">Solve</md-button>
+    </script>
+
     <div id="app" v-cloak>
-      <minesweeper v-for="(game, index) in games" :key="index"></minesweeper>
+      <minesweeper v-for="(game, index) in games" :key="index" ref="games"></minesweeper>
     </div>
 
     <script src="index.js"></script>
