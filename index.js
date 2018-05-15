@@ -23,8 +23,6 @@
 })();
 
 (function() {
-  var app;
-
   Vue.component("cell", {
     template: "#cellTemplate",
 
@@ -41,20 +39,23 @@
     computed: {
       value: function() {
         if (this.revealed && !this.isMine) {
-          return app.getSurroundingMines(this).length;
+          // TODO: this is terrible
+          return this.$parent.$parent.$parent.getSurroundingMines(this).length;
         }
       }
     }
   });
 
-  app = new Vue({
-    el: "#app",
-    data: {
-      rows: 16,
-      columns: 30,
-      mines: 99,
-      cells: [],
-      cellsInitialized: false
+  Vue.component("minesweeper", {
+    template: "#minesweeperTemplate",
+    data: function() {
+      return {
+        rows: 16,
+        columns: 30,
+        mines: 99,
+        cells: [],
+        cellsInitialized: false
+      };
     },
     computed: {
       minefield: function() {
@@ -471,6 +472,13 @@
     mounted: function() {
       this.newGame();
       //setTimeout(this.solve, 500);
+    }
+  });
+
+  var app = new Vue({
+    el: "#app",
+    data: {
+      games: [{}]
     }
   });
   window.app = app; // TODO

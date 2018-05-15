@@ -3,9 +3,9 @@
   <head>
     <meta charset="utf-8">
     <meta content="width=device-width,initial-scale=1,minimal-ui" name="viewport">
-    
+
     <title>Minesweeper</title>
-    
+
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,400italic|Material+Icons">
     <link rel="stylesheet" href="assets/vue-material.min.css">
     <link rel="stylesheet" href="assets/default.css">
@@ -107,7 +107,7 @@
       </button>
     </script>
 
-    <div id="app" v-cloak>
+    <script type="text/template" id="minesweeperTemplate">
       <md-card style="width: 100%;">
         <md-card-header>
           <div style="display: flex; justify-content: space-between;">
@@ -143,6 +143,10 @@
           <md-button v-on:click="reload">New Game</md-button>
         </md-card-actions>
       </md-card>
+    </script>
+
+    <div id="app" v-cloak>
+      <minesweeper v-for="(game, index) in games" :key="index"></minesweeper>
     </div>
 
     <script src="index.js"></script>
