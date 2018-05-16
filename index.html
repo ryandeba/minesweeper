@@ -80,14 +80,12 @@
       <button
         class="cell"
         :class="{
-          'cell--revealed': revealed,
-          'cell--not-revealed': !revealed,
-          'cell--mine': revealed && isMine,
-          'cell--flagged-as-mine': !revealed && flaggedAsMine,
-          'cell--flagged-as-possible-mine': !revealed && flaggedAsPossibleMine,
-          'cell--incorrect': incorrect,
-
-          'animated tada': revealed && isMine,
+          'cell--revealed': String(value).length > 0,
+          'cell--not-revealed': String(value).length == 0,
+          'cell--mine': value == '!',
+          'cell--flagged-as-mine': value == '?',
+          'cell--flagged-as-possible-mine': value == '??',
+          'animated tada': value == '!'
         }"
       >
         <div>
@@ -123,12 +121,12 @@
         </md-card-header>
 
         <md-card-content>
-          <div class="md-layout" v-for="row in minefield" v-if="cells.length == rows * columns">
-            <div class="md-layout-item" v-for="cell in row">
+          <div class="md-layout" v-for="(row, rowIndex) in minefield" v-if="cells.length == rows * columns">
+            <div class="md-layout-item" v-for="(cell, columnIndex) in row">
               <cell
-                v-bind="cell"
-                v-on:click.native="revealCell(cell)"
-                v-on:click.native.right.prevent="flagCell(cell)"
+                v-bind="{value: cell}"
+                v-on:click.native="revealCell(getCellByCoordinates(rowIndex, columnIndex))"
+                v-on:click.native.right.prevent="flagCell(getCellByCoordinates(rowIndex, columnIndex))"
               ></cell>
             </div>
           </div>
@@ -140,7 +138,7 @@
           <md-button v-on:click="solveWithPossibleFlags">Solve w/ possible flags</md-button>
           <md-button v-on:click="solveOneStep">Solve 1 Step</md-button>
           -->
-          <minesweeper-solver :minefield="publicMinefield" ref="solver"></minesweeper-solver>
+          <minesweeper-solver :minefield="minefield" ref="solver"></minesweeper-solver>
           <md-button v-on:click="reload">New Game</md-button>
         </md-card-actions>
       </md-card>

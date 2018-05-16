@@ -33,7 +33,6 @@
       "isMine",
       "flaggedAsMine",
       "flaggedAsPossibleMine",
-      "incorrect",
       "value"
     ]
   });
@@ -61,22 +60,13 @@
           var row = [];
 
           for (var columnIndex = 0; columnIndex < this.columns; columnIndex++) {
-            row.push(this.getCellByCoordinates(rowIndex, columnIndex));
+            row.push(this.getCellByCoordinates(rowIndex, columnIndex).value);
           };
 
           rows.push(row);
         };
 
         return rows;
-      },
-
-      // TODO: can minefield get replaced by this?
-      publicMinefield: function() {
-        return this.minefield.map(function(row) {
-          return row.map(function(cell) {
-            return cell.value;
-          });
-        });
       },
 
       mineCount: function() {
@@ -134,7 +124,6 @@
               row: rowIndex,
               column: columnIndex,
               revealed: false,
-              incorrect: false,
               isMine: false,
               flaggedAsMine: false,
               flaggedAsPossibleMine: false,
@@ -195,15 +184,6 @@
             .forEach(function(otherCell) {
               otherCell.revealed = true;
               self.updateCellValue(otherCell);
-            });
-
-          // update incorrect cells (flagged as mine, but not a mine)
-          self.cells
-            .filter(function(otherCell) {
-              return otherCell.flaggedAsMine && !otherCell.isMine;
-            })
-            .forEach(function(otherCell) {
-              otherCell.incorrect = true;
             });
         };
 
