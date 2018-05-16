@@ -133,11 +133,6 @@
         </md-card-content>
 
         <md-card-actions>
-          <!--
-          <md-button v-on:click="solve">Solve</md-button>
-          <md-button v-on:click="solveWithPossibleFlags">Solve w/ possible flags</md-button>
-          <md-button v-on:click="solveOneStep">Solve 1 Step</md-button>
-          -->
           <minesweeper-solver :minefield="minefield" ref="solver"></minesweeper-solver>
           <md-button v-on:click="reload">New Game</md-button>
         </md-card-actions>
