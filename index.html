@@ -122,10 +122,10 @@
 
         <md-card-content>
           <div class="md-layout" v-for="(row, rowIndex) in minefield" v-if="cells.length == rows * columns">
-            <div class="md-layout-item" v-for="(cell, columnIndex) in row">
+            <div class="md-layout-item" v-for="(value, columnIndex) in row">
               <cell
-                v-bind="{value: cell}"
-                v-on:click.native="revealCell(getCellByCoordinates(rowIndex, columnIndex))"
+                :value="value"
+                v-on:click.native="revealCell(rowIndex, columnIndex)"
                 v-on:click.native.right.prevent="flagCell(getCellByCoordinates(rowIndex, columnIndex))"
               ></cell>
             </div>
@@ -133,8 +133,8 @@
         </md-card-content>
 
         <md-card-actions>
-          <minesweeper-solver :minefield="minefield" ref="solver"></minesweeper-solver>
-          <md-button v-on:click="reload">New Game</md-button>
+          <minesweeper-solver :minefield="minefield" :api="api" ref="solver"></minesweeper-solver>
+          <md-button v-on:click="newGame">New Game</md-button>
         </md-card-actions>
       </md-card>
     </script>

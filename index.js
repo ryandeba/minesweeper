@@ -1,3 +1,4 @@
+// TODO: make this work like MS minesweeper where the mines are placed before you click, and the first click moves the mine to the top-left-most cell if it is a mine
 (function() {
   Vue.use(VueMaterial.default);
 })();
@@ -19,22 +20,13 @@
     }
     return a;
   }
-
 })();
 
 (function() {
   Vue.component("cell", {
     template: "#cellTemplate",
 
-    props: [
-      "row",
-      "column",
-      "revealed",
-      "isMine",
-      "flaggedAsMine",
-      "flaggedAsPossibleMine",
-      "value"
-    ]
+    props: ["value"]
   });
 
   Vue.component("minesweeper", {
@@ -45,7 +37,8 @@
         columns: 30,
         mines: 99,
         cells: [],
-        cellsInitialized: false
+        cellsInitialized: false,
+        api: undefined
       };
     },
     computed: {
@@ -110,10 +103,6 @@
       }
     },
     methods: {
-      reload: function() {
-        location.reload();
-      },
-
       newGame: function() {
         this.cellsInitialized = false;
         this.cells = [];
@@ -133,8 +122,16 @@
         };
       },
 
-      revealCell: function(cell) {
+      revealCell: function() {
         var self = this;
+
+        var cell;
+
+        if (arguments.length == 1) {
+          cell = arguments[0];
+        } else {
+          cell = self.getCellByCoordinates(arguments[0], arguments[1]);
+        }
 
         !self.cellsInitialized && initializeCells();
 
@@ -295,7 +292,6 @@
         };
       },
 
-      // TODO: refactor/move this
       getSurroundingCells: function(cell) {
         return [
           // top
@@ -342,9 +338,98 @@
         return this.getSurroundingCells(cell).filter(function(otherCell) {
           return otherCell.flaggedAsMine;
         });
+      }
+    },
+    mounted: function() {
+      this.api = this; // TODO: only expose what's necessary
+      this.newGame();
+      //setTimeout(this.solve, 500);
+    }
+  });
+
+  Vue.component("minesweeper-solver", {
+    template: "#solverTemplate",
+
+    props: ["minefield", "api"],
+
+    computed: {
+      cells: function() {
+        var cells = [];
+
+        (this.minefield || []).forEach(function(row, rowIndex) {
+          row.forEach(function(value, columnIndex) {
+            cells.push({
+              value: value,
+              rowIndex: rowIndex,
+              columnIndex: columnIndex
+            });
+          });
+        });
+
+        return cells;
+      },
+      isNewGame: function() {
+        return this.cells.filter(function(cell) {
+          return String(cell.value).length != 0;
+        }).length == 0;
+      }
+    },
+
+    methods: {
+      solve: function() {
+        if (this.isNewGame) {
+          this.revealFirstCell();
+        }
       },
 
+      revealFirstCell: function() {
+        var randomCell = this.cells[Math.floor(Math.random()*this.cells.length)];
+        this.api.revealCell(randomCell.rowIndex, randomCell.columnIndex);
+      }
+
       /*
+      solve: function() {
+        var self = this;
+
+        var flaggedCells_before = self.cells.filter(function(cell) {
+          return cell.value != "?";
+        });
+        var revealedCells_before = self.cells.filter(function(cell) {
+          return !Number.isInteger(cell.value);
+        });
+
+        self.solveFlag()
+
+        self.solveReveal();
+
+        var flaggedCells_after = self.cells.filter(function(cell) {
+          return cell.flaggedAsMine;
+        });
+        var revealedCells_after = self.cells.filter(function(cell) {
+          return cell.flaggedAsMine;
+        });
+
+        if (flaggedCells_before.length + revealedCells_before.length != flaggedCells_after.length + revealedCells_after.length) {
+          setTimeout(self.solve, 100);
+        } else {
+          var cells = self.cells.filter(function(cell) {
+            return !cell.revealed && !cell.flaggedAsMine;
+          });
+
+          var cell = cells[Math.floor(Math.random()*cells.length)];
+
+          self.revealCell(cell);
+
+          if (cell.isMine) {
+            // lost
+            setTimeout(self.reload, 2000);
+          } else {
+            // won
+            setTimeout(self.solve, 100);
+          };
+        };
+      },
+
       solveFlag: function() {
         var self = this;
 
@@ -434,64 +519,8 @@
       solveOneStep: function() {
         this.solveFlag();
         this.solveReveal();
-      },
-
-      solve: function() {
-        var self = this;
-
-        var flaggedCells_before = self.cells.filter(function(cell) {
-          return cell.flaggedAsMine;
-        });
-        var revealedCells_before = self.cells.filter(function(cell) {
-          return cell.flaggedAsMine;
-        });
-
-        self.solveFlag()
-
-        self.solveReveal();
-
-        var flaggedCells_after = self.cells.filter(function(cell) {
-          return cell.flaggedAsMine;
-        });
-        var revealedCells_after = self.cells.filter(function(cell) {
-          return cell.flaggedAsMine;
-        });
-
-        if (flaggedCells_before.length + revealedCells_before.length != flaggedCells_after.length + revealedCells_after.length) {
-          setTimeout(self.solve, 100);
-        } else {
-          var cells = self.cells.filter(function(cell) {
-            return !cell.revealed && !cell.flaggedAsMine;
-          });
-
-          var cell = cells[Math.floor(Math.random()*cells.length)];
-
-          self.revealCell(cell);
-
-          if (cell.isMine) {
-            // lost
-            setTimeout(self.reload, 2000);
-          } else {
-            // won
-            setTimeout(self.solve, 100);
-          };
-        };
       }
       */
-
-    },
-    mounted: function() {
-      this.newGame();
-      //setTimeout(this.solve, 500);
-    }
-  });
-
-  Vue.component("minesweeper-solver", {
-    template: "#solverTemplate",
-    props: ["minefield"],
-    methods: {
-      solve: function() {
-      }
     }
   });
 
@@ -499,6 +528,8 @@
     el: "#app",
     data: {
       games: [{}]
+    },
+    methods: {
     }
   });
 
