@@ -126,7 +126,7 @@
               <cell
                 :value="value"
                 v-on:click.native="revealCell(rowIndex, columnIndex)"
-                v-on:click.native.right.prevent="flagCell(getCellByCoordinates(rowIndex, columnIndex))"
+                v-on:click.native.right.prevent="onRightClickCell(getCellByCoordinates(rowIndex, columnIndex))"
               ></cell>
             </div>
           </div>

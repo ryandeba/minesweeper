@@ -209,6 +209,8 @@
       },
 
       getCellValue: function(cell) {
+        // TODO: can these magic strings be constants?
+
         if (cell.revealed && cell.isMine) {
           return "!";
         }
@@ -228,7 +230,7 @@
         return this.getSurroundingMines(cell).length;
       },
 
-      flagCell: function(cell) {
+      onRightClickCell: function(cell) {
         var self = this;
 
         if (cell.revealed) {
@@ -265,6 +267,12 @@
             });
           };
         };
+      },
+
+      flagCell: function(row, column) {
+        var cell = this.getCellByCoordinates(row, column);
+        cell.flaggedAsMine = true;
+        this.updateCellValue(cell);
       },
 
       cascadeReveal: function(cell, sourceCell) {
@@ -341,7 +349,11 @@
       }
     },
     mounted: function() {
-      this.api = this; // TODO: only expose what's necessary
+      this.api = {
+        revealCell: this.revealCell,
+        flagCell: this.flagCell
+      };
+
       this.newGame();
       //setTimeout(this.solve, 500);
     }
@@ -360,31 +372,124 @@
           row.forEach(function(value, columnIndex) {
             cells.push({
               value: value,
-              rowIndex: rowIndex,
-              columnIndex: columnIndex
+              row: rowIndex,
+              column: columnIndex
             });
           });
         });
 
         return cells;
       },
+
       isNewGame: function() {
         return this.cells.filter(function(cell) {
-          return String(cell.value).length != 0;
+          return cell.value.length != 0;
         }).length == 0;
       }
     },
 
     methods: {
+      getSurroundingCells: function(cell) {
+        return [
+          // top
+          this.getCellByCoordinates(cell.row - 1, cell.column),
+
+          // top-right
+          this.getCellByCoordinates(cell.row - 1, cell.column + 1),
+
+          // right
+          this.getCellByCoordinates(cell.row, cell.column + 1),
+
+          // bottom-right
+          this.getCellByCoordinates(cell.row + 1, cell.column + 1),
+
+          // bottom
+          this.getCellByCoordinates(cell.row + 1, cell.column),
+
+          // bottom-left
+          this.getCellByCoordinates(cell.row + 1, cell.column - 1),
+
+          // left
+          this.getCellByCoordinates(cell.row, cell.column - 1),
+
+          // top-left
+          this.getCellByCoordinates(cell.row - 1, cell.column - 1),
+        ].filter(function(otherCell) {
+          return otherCell;
+        });
+      },
+
+      getCellByCoordinates: function(rowIndex, columnIndex) {
+        return this.cells.find(function(cell) {
+          return cell.row == rowIndex && cell.column == columnIndex;
+        });
+      },
+
       solve: function() {
+        this.solveStep();
+      },
+
+      solveStep: function() {
         if (this.isNewGame) {
           this.revealFirstCell();
         }
+
+        this.placeFlags();
+        this.revealCells();
+
+        // TODO: do some recursion...maybe have each method return a boolean (whether or not they made any progress) and check for true here?
+        //this.solve();
       },
 
       revealFirstCell: function() {
         var randomCell = this.cells[Math.floor(Math.random()*this.cells.length)];
-        this.api.revealCell(randomCell.rowIndex, randomCell.columnIndex);
+        this.api.revealCell(randomCell.row, randomCell.column);
+      },
+
+      placeFlags: function() {
+        var self = this;
+
+        self.cells
+          .filter(function(cell) {
+            return Number.isInteger(cell.value);
+          })
+          .forEach(function(cell) {
+            var unrevealedSurroundingCells = self.getSurroundingCells(cell).filter(function(otherCell) {
+              return !Number.isInteger(otherCell.value);
+            });
+
+            if (unrevealedSurroundingCells.length == cell.value) {
+              unrevealedSurroundingCells.forEach(function(otherCell) {
+                self.api.flagCell(otherCell.row, otherCell.column);
+              });
+            }
+          });
+      },
+
+      revealCells: function() {
+        var self = this;
+
+        self.cells
+          .filter(function(cell) {
+            return Number.isInteger(cell.value);
+          })
+          .forEach(function(cell) {
+            var surroundingCells = self.getSurroundingCells(cell);
+
+            var flaggedSurroundingCells = surroundingCells.filter(function(otherCell) {
+              return otherCell.value == "?";
+            });
+
+            if (flaggedSurroundingCells.length == cell.value) {
+              surroundingCells
+                .filter(function(otherCell) {
+                  return otherCell.value == "";
+                })
+                .forEach(function(otherCell) {
+                  self.api.revealCell(otherCell.row, otherCell.column);
+                });
+            }
+          });
       }
 
       /*
