@@ -192,7 +192,6 @@
             var cell = self.cells[cellIndex];
 
             if (excludeCells.filter(function(excludeCell) { return excludeCell == cell; }).length > 0) {
-              console.log("skipping");
               continue;
             };
 
@@ -426,7 +425,6 @@
       },
 
       solve: function() {
-        console.log("solve");
         var self = this;
 
         var startingState = JSON.stringify(self.cells);
