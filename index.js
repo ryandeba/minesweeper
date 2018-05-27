@@ -426,7 +426,17 @@
       },
 
       solve: function() {
-        this.solveStep();
+        console.log("solve");
+        var self = this;
+
+        var startingState = JSON.stringify(self.cells);
+        self.solveStep();
+
+        setTimeout(function() {
+          if (JSON.stringify(self.cells) != startingState) {
+            self.solve();
+          }
+        }, 0);
       },
 
       solveStep: function() {
@@ -436,9 +446,7 @@
 
         this.placeFlags();
         this.revealCells();
-
-        // TODO: do some recursion...maybe have each method return a boolean (whether or not they made any progress) and check for true here?
-        //this.solve();
+        this.solveWithPossibleFlags();
       },
 
       revealFirstCell: function() {
@@ -449,6 +457,7 @@
       placeFlags: function() {
         var self = this;
 
+        // simple flags
         self.cells
           .filter(function(cell) {
             return Number.isInteger(cell.value);
@@ -483,149 +492,84 @@
             if (flaggedSurroundingCells.length == cell.value) {
               surroundingCells
                 .filter(function(otherCell) {
-                  return otherCell.value == "";
+                  return String(otherCell.value).length == 0;
                 })
                 .forEach(function(otherCell) {
                   self.api.revealCell(otherCell.row, otherCell.column);
                 });
             }
           });
-      }
-
-      /*
-      solve: function() {
-        var self = this;
-
-        var flaggedCells_before = self.cells.filter(function(cell) {
-          return cell.value != "?";
-        });
-        var revealedCells_before = self.cells.filter(function(cell) {
-          return !Number.isInteger(cell.value);
-        });
-
-        self.solveFlag()
-
-        self.solveReveal();
-
-        var flaggedCells_after = self.cells.filter(function(cell) {
-          return cell.flaggedAsMine;
-        });
-        var revealedCells_after = self.cells.filter(function(cell) {
-          return cell.flaggedAsMine;
-        });
-
-        if (flaggedCells_before.length + revealedCells_before.length != flaggedCells_after.length + revealedCells_after.length) {
-          setTimeout(self.solve, 100);
-        } else {
-          var cells = self.cells.filter(function(cell) {
-            return !cell.revealed && !cell.flaggedAsMine;
-          });
-
-          var cell = cells[Math.floor(Math.random()*cells.length)];
-
-          self.revealCell(cell);
-
-          if (cell.isMine) {
-            // lost
-            setTimeout(self.reload, 2000);
-          } else {
-            // won
-            setTimeout(self.solve, 100);
-          };
-        };
-      },
-
-      solveFlag: function() {
-        var self = this;
-
-        this.cells
-          .filter(function(cell) {
-            return cell.revealed;
-          })
-          .forEach(function(cell) {
-            var unrevealedSurroundingCells = self.getSurroundingCells(cell).filter(function(otherCell) {
-              return !otherCell.revealed;
-            });
-
-            if (unrevealedSurroundingCells.length == self.getSurroundingMines(cell).length) {
-              unrevealedSurroundingCells.forEach(function(otherCell) {
-                otherCell.flaggedAsMine = true;
-              });
-            };
-          });
-      },
-
-      solveReveal: function() {
-        var self = this;
-
-        var cellsFlaggedAsPossibleMine = self.cells.filter(function(cell) {
-          return cell.flaggedAsPossibleMine;
-        });
-
-        this.cells
-          .filter(function(cell) {
-            return cell.revealed;
-          })
-          .forEach(function(cell) {
-            var flaggedSurroundingCells = self.getSurroundingCells(cell).filter(function(otherCell) {
-              return otherCell.flaggedAsMine;
-            });
-
-            if (flaggedSurroundingCells.length == self.getSurroundingMines(cell).length) {
-              self.getSurroundingCells(cell)
-                .filter(function(otherCell) {
-                  return !otherCell.revealed && !otherCell.flaggedAsMine;
-                })
-                .forEach(function(otherCell) {
-                  self.revealCell(otherCell);
-                });
-            };
-          });
       },
 
       solveWithPossibleFlags: function() {
         var self = this;
 
-        removeAllPossibleFlags();
+        var cells = self.cells.map(decorateCell);
 
-        getCellsWithUnknownMines()
-          .forEach(function(cell) {
-            var surroundingCellsUnrevealedAndUnflagged = self.getSurroundingCellsUnrevealedAndUnflagged(cell);
+        cells
+          .filter(cellHasUnknownSurroundingMines)
+          .forEach(function(rootCell) {
+            cells
+              .filter(cellHasUnknownSurroundingMines)
+              .filter(cellIsNotRootCell)
+              .filter(cellSurroundsAllPotentialMines)
+              .forEach(function(cell) {
+                if (cell.value == cell.flaggedSurroundingCells.length - rootCell.unknownSurroundingCells.length) {
+                  cell.surroundingCells
+                    .filter(cellIsNotPotentialMine)
+                    .forEach(function(surroundingCell) {
+                      self.api.revealCell(surroundingCell.row, surroundingCell.column);
+                    });
+                }
+              });
 
-            surroundingCellsUnrevealedAndUnflagged.forEach(function(otherCell) {
-              otherCell.flaggedAsPossibleMine = true;
-            });
+            function cellSurroundsAllPotentialMines(cell) {
+              var cellIsSurroundedByAllPotentialMines = true;
 
-            self.solveOneStep();
+              rootCell.unknownSurroundingCells.forEach(function(potentialMineCell) {
+                if (
+                  !self.getSurroundingCells(cell).find(function(surroundingCell) {
+                    return surroundingCell.row == potentialMineCell.row && surroundingCell.column == potentialMineCell.column;
+                  })
+                ) {
+                  cellIsSurroundedByAllPotentialMines = false;
+                }
+              });
 
-            surroundingCellsUnrevealedAndUnflagged.forEach(function(otherCell) {
-              otherCell.flaggedAsPossibleMine = false;
-            });
+              return cellIsSurroundedByAllPotentialMines;
+            };
+
+            function cellIsNotRootCell(cell) {
+              return cell != rootCell;
+            };
+
+            function cellIsNotPotentialMine(cell) {
+              return !rootCell.unknownSurroundingCells.find(function(surroundingCell) {
+                return surroundingCell.row == cell.row && surroundingCell.column == cell.column;
+              });
+            };
           });
 
-        function removeAllPossibleFlags() {
-          self.cells
-            .filter(function(cell) {
-              return cell.flaggedAsPossibleMine;
-            })
-            .forEach(function(cell) {
-              cell.flaggedAsPossibleMine = false;
-            });
+        function decorateCell(cell) {
+          cell = JSON.parse(JSON.stringify(cell));
+
+          cell.surroundingCells = self.getSurroundingCells(cell);
+
+          cell.flaggedSurroundingCells = cell.surroundingCells.filter(function(otherCell) {
+            return otherCell.value == "?";
+          });
+
+          cell.unknownSurroundingCells = cell.surroundingCells.filter(function(otherCell) {
+            return String(otherCell.value).length == 0;
+          });
+
+          return cell;
         };
 
-        function getCellsWithUnknownMines() {
-          return self.cells
-            .filter(function(cell) {
-              return cell.revealed && self.getSurroundingMines(cell).length > self.getSurroundingCellsFlaggedAsMine(cell).length;
-            });
+        function cellHasUnknownSurroundingMines(cell) {
+          return Number.isInteger(cell.value) && cell.value > 0 && cell.unknownSurroundingCells.length > 0;
         };
-      },
-
-      solveOneStep: function() {
-        this.solveFlag();
-        this.solveReveal();
       }
-      */
     }
   });
 
