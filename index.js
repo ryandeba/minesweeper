@@ -26,7 +26,7 @@
   Vue.component("cell", {
     template: "#cellTemplate",
 
-    props: ["value"]
+    props: ["value", "api"]
   });
 
   Vue.component("minesweeper", {
@@ -38,7 +38,13 @@
         mines: 99,
         cells: [],
         cellsInitialized: false,
-        api: undefined
+        api: undefined,
+        constants: {
+          MINE: "!",
+          FLAGGED_AS_MINE: "?",
+          FLAGGED_AS_POSSIBLE_MINE: "??",
+          UNREVEALED: ""
+        }
       };
     },
     computed: {
@@ -208,22 +214,20 @@
       },
 
       getCellValue: function(cell) {
-        // TODO: can these magic strings be constants?
-
         if (cell.revealed && cell.isMine) {
-          return "!";
+          return this.constants.MINE;
         }
 
         if (cell.flaggedAsMine) {
-          return "?";
+          return this.constants.FLAGGED_AS_MINE;
         }
 
         if (cell.flaggedAsPossibleMine) {
-          return "??";
+          return this.constants.FLAGGED_AS_POSSIBLE_MINE;
         }
 
         if (!cell.revealed) {
-          return "";
+          return this.constants.UNREVEALED;
         }
 
         return this.getSurroundingMines(cell).length;
@@ -350,7 +354,8 @@
     mounted: function() {
       this.api = {
         revealCell: this.revealCell,
-        flagCell: this.flagCell
+        flagCell: this.flagCell,
+        constants: this.constants
       };
 
       this.newGame();
@@ -484,7 +489,7 @@
             var surroundingCells = self.getSurroundingCells(cell);
 
             var flaggedSurroundingCells = surroundingCells.filter(function(otherCell) {
-              return otherCell.value == "?";
+              return otherCell.value == self.api.constants.FLAGGED_AS_MINE;
             });
 
             if (flaggedSurroundingCells.length == cell.value) {
@@ -554,7 +559,7 @@
           cell.surroundingCells = self.getSurroundingCells(cell);
 
           cell.flaggedSurroundingCells = cell.surroundingCells.filter(function(otherCell) {
-            return otherCell.value == "?";
+            return otherCell.value == self.api.constants.FLAGGED_AS_MINE;
           });
 
           cell.unknownSurroundingCells = cell.surroundingCells.filter(function(otherCell) {
