@@ -1,0 +1,36 @@
+{
+  "name": "minesweeper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "serve": "webpack-dev-server --mode development"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@babel/core": "^7.7.7",
+    "@babel/preset-env": "^7.7.7",
+    "babel-loader": "^8.0.6",
+    "css-loader": "^3.4.0",
+    "font-awesome-webpack": "0.0.5-beta.2",
+    "html-webpack-plugin": "^3.2.0",
+    "rimraf": "^3.0.0",
+    "vue": "^2.6.11",
+    "vue-loader": "^15.8.3",
+    "vue-style-loader": "^4.1.2",
+    "vue-template-compiler": "^2.6.11",
+    "webpack": "^4.41.3",
+    "webpack-cli": "^3.3.10",
+    "webpack-dev-server": "^3.10.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ryandeba/minesweeper.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ryandeba/minesweeper/issues"
+  },
+  "homepage": "https://github.com/ryandeba/minesweeper#readme"
+}
